@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
-import DataLoader from './DataLoader';
+import CharacterLoader from './CharacterLoader';
 
 function App() {
   return (
     <div className="App">
-      <DataLoader />
+      <CharacterLoader />
     </div>
   );
 }
