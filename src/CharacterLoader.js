@@ -19,30 +19,28 @@ function CharacterLoader() {
   const [filteredCharacters, setFilteredCharacters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1); // Estado para la página actual
-  const charactersPerPage = 12; // Número de personajes por página
+  const [page, setPage] = useState(1);
+  const charactersPerPage = 12;
 
   useEffect(() => {
-    // Carga los personajes cuando se monta el componente
     loadCharacters();
   }, []);
 
   const loadCharacters = async () => {
     setLoading(true);
     try {
-      // Obtener todos los personajes de SWAPI
       let allCharacters = [];
       let url = 'https://swapi.dev/api/people/';
       while (url) {
         const response = await axios.get(url);
         allCharacters = [...allCharacters, ...response.data.results];
-        url = response.data.next; // La API de SWAPI devuelve `next` si hay más datos
+        url = response.data.next;
       }
       const sortedCharacters = allCharacters.sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       setCharacters(sortedCharacters);
-      setFilteredCharacters(sortedCharacters); // Inicialmente muestra todos los personajes
+      setFilteredCharacters(sortedCharacters);
     } catch (error) {
       console.error(error);
     } finally {
@@ -53,33 +51,41 @@ function CharacterLoader() {
   const handleSearch = (event) => {
     const term = event.target.value.toLowerCase();
     setSearchTerm(term);
-    setPage(1); // Reiniciar la página a la primera en cada búsqueda
+    setPage(1);
 
     if (term === '') {
       setFilteredCharacters(characters);
     } else {
-      const exactMatches = characters.filter((character) =>
+      const filtered = characters.filter((character) => {
+        const { name, gender, height, eye_color } = character;
+        return (
+          (name && name.toLowerCase().includes(term)) ||
+          (gender && gender.toLowerCase().includes(term)) ||
+          (height && height.toString().includes(term)) ||
+          (eye_color && eye_color.toLowerCase().includes(term))
+        );
+      });
+
+      const exactMatches = filtered.filter((character) =>
         character.name.toLowerCase().startsWith(term)
       );
-      const partialMatches = characters.filter(
-        (character) =>
-          character.name.toLowerCase().includes(term) &&
-          !character.name.toLowerCase().startsWith(term)
+      const partialMatches = filtered.filter(
+        (character) => !character.name.toLowerCase().startsWith(term)
       );
+
       const sortedResults = [
         ...exactMatches.sort((a, b) => a.name.localeCompare(b.name)),
         ...partialMatches.sort((a, b) => a.name.localeCompare(b.name)),
       ];
+
       setFilteredCharacters(sortedResults);
     }
   };
 
-  // Manejar cambio de página
   const handlePageChange = (event, value) => {
     setPage(value);
   };
 
-  // Calcular los personajes de la página actual
   const indexOfLastCharacter = page * charactersPerPage;
   const indexOfFirstCharacter = indexOfLastCharacter - charactersPerPage;
   const currentCharacters = filteredCharacters.slice(indexOfFirstCharacter, indexOfLastCharacter);
@@ -117,6 +123,12 @@ function CharacterLoader() {
                     <Typography variant="body2" color="text.secondary">
                       <strong>Año de nacimiento:</strong> {character.birth_year}
                     </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Altura:</strong> {character.height}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Masa:</strong> {character.mass}
+                    </Typography>
                   </CardContent>
                   <CardActions>
                     <IconButton color="primary" aria-label="character icon">
@@ -128,7 +140,6 @@ function CharacterLoader() {
             ))}
           </Grid>
           
-          {/* Paginador */}
           <Pagination
             count={Math.ceil(filteredCharacters.length / charactersPerPage)}
             page={page}
